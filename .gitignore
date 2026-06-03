@@ -6,3 +6,4 @@ data/*.db
 data/backups/
 *.xlsx
 .DS_Store
+.streamlit/secrets.toml

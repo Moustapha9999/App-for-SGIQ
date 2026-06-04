@@ -8,94 +8,173 @@ from utils.crud_ui import render_dataframe
 
 
 def page_fournisseurs(session, user):
-    st.header("🏭 Gestion des Fournisseurs")
+    st.title("🏭 Gestion des Fournisseurs")
+
     tab_liste, tab_ajouter, tab_modifier, tab_supprimer, tab_hist = st.tabs(
-        ["Liste", "Ajouter", "Modifier", "Supprimer", "Historique"]
+        ["📋 Liste", "➕ Ajouter", "✏️ Modifier", "🗑️ Supprimer", "📜 Historique"]
     )
 
+    # ── Liste ─────────────────────────────────────────────────────────────
     with tab_liste:
-        fournisseurs = session.scalars(select(Fournisseur).order_by(Fournisseur.id_fournisseur)).all()
-        df = pd.DataFrame(
-            [
-                {
-                    "ID": f.id_fournisseur,
-                    "Raison sociale": f.raison_sociale,
-                    "Produit principal": f.produit_principal,
-                    "Téléphone": f.telephone,
-                    "Paiement": f.mode_paiement,
-                    "Statut": f.statut,
-                }
-                for f in fournisseurs
-            ]
-        )
+        fournisseurs = session.scalars(
+            select(Fournisseur).order_by(Fournisseur.raison_sociale)
+        ).all()
+        df = pd.DataFrame([{
+            "ID":              f.id_fournisseur,
+            "Raison sociale":  f.raison_sociale,
+            "Produit principal": f.produit_principal or "—",
+            "Téléphone":       f.telephone or "—",
+            "Mode paiement":   f.mode_paiement,
+            "Statut":          f.statut,
+        } for f in fournisseurs])
+        st.caption(f"{len(fournisseurs)} fournisseur(s)")
         render_dataframe(df)
 
+    # ── Ajouter ───────────────────────────────────────────────────────────
     with tab_ajouter:
-        with st.form("add_fourn"):
-            rs = st.text_input("Raison sociale *")
-            pp = st.text_input("Produit principal")
-            tel = st.text_input("Téléphone")
-            adr = st.text_input("Adresse")
-            email = st.text_input("Email")
-            mp = st.selectbox("Mode paiement", ["Espèces", "Virement", "Chèque"])
+        st.subheader("Nouveau fournisseur")
+        with st.form("add_fourn", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+            rs     = c1.text_input("Raison sociale *", placeholder="SOCOCIM Industries")
+            pp     = c2.text_input("Produit principal", placeholder="Ciment")
+            tel    = c1.text_input("Téléphone",  placeholder="33 000 00 00")
+            email  = c2.text_input("Email",      placeholder="contact@fourn.sn")
+            adr    = st.text_input("Adresse",    placeholder="Zone Industrielle, Dakar")
+            mp     = st.selectbox("Mode paiement", ["Espèces", "Virement", "Chèque"])
             statut = st.selectbox("Statut", ["Actif", "Inactif"])
-            if st.form_submit_button("Enregistrer", type="primary") and rs:
-                session.add(
-                    Fournisseur(
-                        raison_sociale=rs,
-                        produit_principal=pp,
-                        telephone=tel,
-                        adresse=adr,
-                        email=email,
-                        mode_paiement=mp,
-                        statut=statut,
-                    )
-                )
+            submitted = st.form_submit_button("💾 Enregistrer", type="primary")
+
+        if submitted:
+            if not rs.strip():
+                st.error("❌ La raison sociale est obligatoire.")
+            else:
+                session.add(Fournisseur(
+                    raison_sociale=rs.strip(), produit_principal=pp or None,
+                    telephone=tel or None, email=email or None,
+                    adresse=adr or None, mode_paiement=mp, statut=statut,
+                ))
                 log_action(session, user.id_user, f"Ajout fournisseur {rs}")
                 session.commit()
-                st.success("Fournisseur ajouté.")
+                st.toast(f"✅ Fournisseur **{rs}** ajouté !", icon="✅")
                 st.rerun()
 
+    # ── Modifier ──────────────────────────────────────────────────────────
     with tab_modifier:
-        fournisseurs = session.scalars(select(Fournisseur)).all()
-        if fournisseurs:
-            fid = st.selectbox("Fournisseur", [f.id_fournisseur for f in fournisseurs], format_func=lambda i: next(f.raison_sociale for f in fournisseurs if f.id_fournisseur == i))
+        fournisseurs = session.scalars(
+            select(Fournisseur).order_by(Fournisseur.raison_sociale)
+        ).all()
+        if not fournisseurs:
+            st.info("Aucun fournisseur à modifier.")
+        else:
+            fid = st.selectbox(
+                "Sélectionner le fournisseur",
+                [f.id_fournisseur for f in fournisseurs],
+                format_func=lambda i: next(
+                    f.raison_sociale for f in fournisseurs if f.id_fournisseur == i
+                ),
+                key="mod_fourn_select",
+            )
             f = session.get(Fournisseur, fid)
             with st.form("edit_fourn"):
-                f.raison_sociale = st.text_input("Raison sociale", value=f.raison_sociale)
-                f.produit_principal = st.text_input("Produit principal", value=f.produit_principal or "")
-                f.telephone = st.text_input("Téléphone", value=f.telephone or "")
-                f.adresse = st.text_input("Adresse", value=f.adresse or "")
-                f.email = st.text_input("Email", value=f.email or "")
-                f.mode_paiement = st.selectbox("Mode paiement", ["Espèces", "Virement", "Chèque"], index=["Espèces", "Virement", "Chèque"].index(f.mode_paiement) if f.mode_paiement in ["Espèces", "Virement", "Chèque"] else 0)
-                f.statut = st.selectbox("Statut", ["Actif", "Inactif"], index=0 if f.statut == "Actif" else 1)
-                if st.form_submit_button("Mettre à jour", type="primary"):
-                    log_action(session, user.id_user, f"Modification fournisseur {f.raison_sociale}")
-                    session.commit()
-                    st.success("Fournisseur mis à jour.")
-                    st.rerun()
+                c1, c2 = st.columns(2)
+                rs_e   = c1.text_input("Raison sociale", value=f.raison_sociale)
+                pp_e   = c2.text_input("Produit principal", value=f.produit_principal or "")
+                tel_e  = c1.text_input("Téléphone", value=f.telephone or "")
+                email_e= c2.text_input("Email",     value=f.email or "")
+                adr_e  = st.text_input("Adresse",   value=f.adresse or "")
+                mp_list = ["Espèces", "Virement", "Chèque"]
+                mp_e   = st.selectbox("Mode paiement", mp_list,
+                            index=mp_list.index(f.mode_paiement)
+                            if f.mode_paiement in mp_list else 0)
+                st_e   = st.selectbox("Statut", ["Actif", "Inactif"],
+                            index=0 if f.statut == "Actif" else 1)
+                update = st.form_submit_button("💾 Mettre à jour", type="primary")
 
-    with tab_supprimer:
-        fournisseurs = session.scalars(select(Fournisseur)).all()
-        if fournisseurs:
-            fid = st.selectbox("À supprimer", [f.id_fournisseur for f in fournisseurs], format_func=lambda i: next(f.raison_sociale for f in fournisseurs if f.id_fournisseur == i))
-            if st.button("Supprimer", type="primary"):
-                f = session.get(Fournisseur, fid)
-                log_action(session, user.id_user, f"Suppression fournisseur {f.raison_sociale}")
-                session.delete(f)
+            if update:
+                ancien = f.raison_sociale
+                f.raison_sociale   = rs_e
+                f.produit_principal = pp_e or None
+                f.telephone        = tel_e or None
+                f.email            = email_e or None
+                f.adresse          = adr_e or None
+                f.mode_paiement    = mp_e
+                f.statut           = st_e
+                log_action(session, user.id_user, f"Modification fournisseur {ancien}")
                 session.commit()
-                st.success("Fournisseur supprimé.")
+                st.toast(f"✅ Fournisseur **{rs_e}** mis à jour !", icon="✅")
                 st.rerun()
 
-    with tab_hist:
-        fournisseurs = session.scalars(select(Fournisseur)).all()
-        if fournisseurs:
-            fid = st.selectbox("Fournisseur", [f.id_fournisseur for f in fournisseurs], key="hist_f", format_func=lambda i: next(f.raison_sociale for f in fournisseurs if f.id_fournisseur == i))
-            total = session.scalar(
-                select(func.coalesce(func.sum(Achat.montant_total), 0)).where(
-                    Achat.id_fournisseur == fid, Achat.annule == False
-                )
+    # ── Supprimer ─────────────────────────────────────────────────────────
+    with tab_supprimer:
+        fournisseurs = session.scalars(
+            select(Fournisseur).order_by(Fournisseur.raison_sociale)
+        ).all()
+        if not fournisseurs:
+            st.info("Aucun fournisseur à supprimer.")
+        else:
+            fid = st.selectbox(
+                "Sélectionner le fournisseur à supprimer",
+                [f.id_fournisseur for f in fournisseurs],
+                format_func=lambda i: next(
+                    f.raison_sociale for f in fournisseurs if f.id_fournisseur == i
+                ),
+                key="del_fourn_select",
             )
-            nb = session.scalar(select(func.count()).select_from(Achat).where(Achat.id_fournisseur == fid, Achat.annule == False)) or 0
-            st.metric("Total commandes (achats)", f"{total:.2f}")
-            st.metric("Nombre d'achats", nb)
+            f = session.get(Fournisseur, fid)
+            st.warning(
+                f"⚠️ Vous allez supprimer **{f.raison_sociale}**. "
+                "Cette action est irréversible."
+            )
+            confirmer = st.checkbox("Je confirme la suppression", key="del_fourn_confirm")
+            if st.button("🗑️ Supprimer définitivement", type="primary",
+                         disabled=not confirmer, key="del_fourn_btn"):
+                nom_supp = f.raison_sociale
+                log_action(session, user.id_user, f"Suppression fournisseur {nom_supp}")
+                session.delete(f)
+                session.commit()
+                st.toast(f"🗑️ Fournisseur **{nom_supp}** supprimé.", icon="🗑️")
+                st.rerun()
+
+    # ── Historique ────────────────────────────────────────────────────────
+    with tab_hist:
+        fournisseurs = session.scalars(
+            select(Fournisseur).order_by(Fournisseur.raison_sociale)
+        ).all()
+        if not fournisseurs:
+            st.info("Aucun fournisseur enregistré.")
+        else:
+            fid = st.selectbox(
+                "Sélectionner un fournisseur",
+                [f.id_fournisseur for f in fournisseurs],
+                format_func=lambda i: next(
+                    f.raison_sociale for f in fournisseurs if f.id_fournisseur == i
+                ),
+                key="hist_fourn_select",
+            )
+            total = session.scalar(
+                select(func.coalesce(func.sum(Achat.montant_total), 0))
+                .where(Achat.id_fournisseur == fid, Achat.annule == False)
+            ) or 0
+            nb = session.scalar(
+                select(func.count()).select_from(Achat)
+                .where(Achat.id_fournisseur == fid, Achat.annule == False)
+            ) or 0
+            m1, m2 = st.columns(2)
+            m1.metric("Nombre d'achats",  nb)
+            m2.metric("Total commandes", f"{float(total):,.0f} FCFA")
+
+            achats = session.scalars(
+                select(Achat)
+                .where(Achat.id_fournisseur == fid, Achat.annule == False)
+                .order_by(Achat.date.desc())
+            ).all()
+            if achats:
+                render_dataframe(pd.DataFrame([{
+                    "N° Achat": a.id_achat,
+                    "Date":     a.date.strftime("%d/%m/%Y") if a.date else "—",
+                    "Montant":  f"{float(a.montant_total):,.0f} FCFA",
+                    "Mode":     a.mode_paiement,
+                    "Statut":   a.statut,
+                } for a in achats]))
+            else:
+                st.info("Aucun achat pour ce fournisseur.")

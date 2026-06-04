@@ -1,0 +1,261 @@
+/* SGIQ — Global stylesheet injected via st.markdown */
+
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── Root variables ── */
+:root {
+  --blue-50:  #EFF6FF;
+  --blue-100: #DBEAFE;
+  --blue-500: #3B82F6;
+  --blue-600: #2563EB;
+  --blue-700: #1D4ED8;
+  --blue-900: #1E3A5F;
+  --slate-50:  #F8FAFC;
+  --slate-100: #F1F5F9;
+  --slate-200: #E2E8F0;
+  --slate-400: #94A3B8;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-900: #0F172A;
+  --green-500: #22C55E;
+  --amber-500: #F59E0B;
+  --red-500:   #EF4444;
+  --radius:    10px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+
+/* ── Global typography ── */
+html, body, [class*="css"] {
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+/* ── Hide Streamlit default decorations ── */
+#MainMenu { visibility: hidden; }
+footer    { visibility: hidden; }
+header    { visibility: hidden; }
+.stDeployButton { display: none; }
+
+/* ── App background ── */
+.stApp {
+  background: var(--slate-50);
+}
+
+/* ── Sidebar ── */
+[data-testid="stSidebar"] {
+  background: var(--blue-900) !important;
+  border-right: none !important;
+}
+[data-testid="stSidebar"] * {
+  color: #CBD5E1 !important;
+}
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3,
+[data-testid="stSidebar"] strong {
+  color: #F1F5F9 !important;
+}
+[data-testid="stSidebar"] .stRadio label {
+  color: #CBD5E1 !important;
+  font-size: 0.9rem;
+  padding: 6px 0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+[data-testid="stSidebar"] .stRadio label:hover {
+  color: #F1F5F9 !important;
+}
+[data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {
+  color: #CBD5E1 !important;
+}
+/* Sidebar button (déconnexion) */
+[data-testid="stSidebar"] .stButton button {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #CBD5E1 !important;
+  border-radius: var(--radius);
+  transition: all 0.2s;
+}
+[data-testid="stSidebar"] .stButton button:hover {
+  background: rgba(255,255,255,0.12) !important;
+  color: #F1F5F9 !important;
+}
+
+/* ── Metric cards ── */
+[data-testid="metric-container"] {
+  background: #FFFFFF !important;
+  border: 1px solid var(--slate-200) !important;
+  border-radius: var(--radius) !important;
+  padding: 1rem 1.25rem !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: box-shadow 0.2s;
+}
+[data-testid="metric-container"]:hover {
+  box-shadow: var(--shadow-md) !important;
+}
+[data-testid="stMetricLabel"] {
+  font-size: 0.78rem !important;
+  font-weight: 500 !important;
+  color: var(--slate-400) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+[data-testid="stMetricValue"] {
+  font-size: 1.6rem !important;
+  font-weight: 600 !important;
+  color: var(--slate-900) !important;
+  font-family: 'DM Mono', monospace !important;
+}
+
+/* ── Tabs ── */
+.stTabs [data-baseweb="tab-list"] {
+  background: var(--slate-100);
+  border-radius: var(--radius);
+  padding: 4px;
+  gap: 4px;
+  border-bottom: none !important;
+}
+.stTabs [data-baseweb="tab"] {
+  border-radius: 7px !important;
+  padding: 6px 16px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  color: var(--slate-600) !important;
+  background: transparent !important;
+  border: none !important;
+  transition: all 0.15s !important;
+}
+.stTabs [aria-selected="true"] {
+  background: #FFFFFF !important;
+  color: var(--blue-600) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* ── Buttons ── */
+.stButton button[kind="primary"] {
+  background: var(--blue-600) !important;
+  border: none !important;
+  color: white !important;
+  border-radius: var(--radius) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  padding: 0.5rem 1.25rem !important;
+  transition: all 0.2s !important;
+  box-shadow: 0 1px 3px rgba(37,99,235,0.3) !important;
+}
+.stButton button[kind="primary"]:hover {
+  background: var(--blue-700) !important;
+  box-shadow: 0 4px 12px rgba(37,99,235,0.35) !important;
+  transform: translateY(-1px);
+}
+.stButton button[kind="secondary"] {
+  background: white !important;
+  border: 1px solid var(--slate-200) !important;
+  color: var(--slate-700) !important;
+  border-radius: var(--radius) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  transition: all 0.2s !important;
+}
+.stButton button[kind="secondary"]:hover {
+  background: var(--slate-50) !important;
+  border-color: var(--slate-400) !important;
+}
+
+/* ── Inputs / Selects ── */
+.stTextInput input,
+.stNumberInput input,
+.stSelectbox select,
+.stTextArea textarea {
+  border: 1px solid var(--slate-200) !important;
+  border-radius: var(--radius) !important;
+  background: white !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 0.875rem !important;
+  color: var(--slate-900) !important;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.stTextInput input:focus,
+.stNumberInput input:focus,
+.stTextArea textarea:focus {
+  border-color: var(--blue-500) !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12) !important;
+}
+
+/* ── DataFrames ── */
+[data-testid="stDataFrame"] {
+  border: 1px solid var(--slate-200) !important;
+  border-radius: var(--radius) !important;
+  overflow: hidden !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* ── Alerts / info boxes ── */
+.stAlert {
+  border-radius: var(--radius) !important;
+  border-left-width: 4px !important;
+  font-size: 0.875rem !important;
+}
+
+/* ── Divider ── */
+hr {
+  border-color: var(--slate-200) !important;
+  margin: 1.5rem 0 !important;
+}
+
+/* ── Page title ── */
+h1 {
+  font-weight: 600 !important;
+  color: var(--slate-900) !important;
+  font-size: 1.6rem !important;
+  letter-spacing: -0.02em;
+}
+h2 {
+  font-weight: 600 !important;
+  color: var(--slate-700) !important;
+  font-size: 1.2rem !important;
+}
+h3 {
+  font-weight: 500 !important;
+  color: var(--slate-600) !important;
+  font-size: 1rem !important;
+}
+
+/* ── Forms ── */
+[data-testid="stForm"] {
+  background: white !important;
+  border: 1px solid var(--slate-200) !important;
+  border-radius: 12px !important;
+  padding: 1.5rem !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* ── Containers avec border ── */
+[data-testid="stVerticalBlockBorderWrapper"] {
+  border: 1px solid var(--slate-200) !important;
+  border-radius: 12px !important;
+  background: white !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* ── Expander ── */
+.streamlit-expanderHeader {
+  background: var(--slate-100) !important;
+  border-radius: var(--radius) !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  color: var(--slate-700) !important;
+}
+
+/* ── Toast ── */
+[data-testid="stToast"] {
+  border-radius: var(--radius) !important;
+  font-size: 0.875rem !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--slate-100); }
+::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }

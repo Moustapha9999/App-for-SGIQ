@@ -1,3 +1,5 @@
+# SGIQ — Requirements
+
 streamlit
 sqlalchemy
 plotly
@@ -9,3 +11,4 @@ streamlit-authenticator
 altair
 psycopg2-binary
 python-dotenv
+Pillow

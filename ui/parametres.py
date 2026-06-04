@@ -31,7 +31,7 @@ def page_parametres(session, user):
         with st.form("params_soc"):
             c1, c2 = st.columns(2)
             nom    = c1.text_input("Nom société",   value=_get_val(session, "societe_nom"))
-            devise = c2.text_input("Devise",        value=_get_val(session, "devise", "FCFA"))
+            devise = c2.text_input("Devise",        value=_get_val(session, "devise", "MRU"))
             adresse = st.text_area("Adresse",       value=_get_val(session, "societe_adresse"), height=80)
             tel    = c1.text_input("Téléphone",     value=_get_val(session, "societe_telephone"))
             email  = c2.text_input("Email",         value=_get_val(session, "societe_email"))

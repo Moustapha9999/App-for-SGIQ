@@ -161,7 +161,7 @@ def page_fournisseurs(session, user):
             ) or 0
             m1, m2 = st.columns(2)
             m1.metric("Nombre d'achats",  nb)
-            m2.metric("Total commandes", f"{float(total):,.0f} FCFA")
+            m2.metric("Total commandes", f"{float(total):,.0f} MRU")
 
             achats = session.scalars(
                 select(Achat)
@@ -172,7 +172,7 @@ def page_fournisseurs(session, user):
                 render_dataframe(pd.DataFrame([{
                     "N° Achat": a.id_achat,
                     "Date":     a.date.strftime("%d/%m/%Y") if a.date else "—",
-                    "Montant":  f"{float(a.montant_total):,.0f} FCFA",
+                    "Montant":  f"{float(a.montant_total):,.0f} MRU",
                     "Mode":     a.mode_paiement,
                     "Statut":   a.statut,
                 } for a in achats]))

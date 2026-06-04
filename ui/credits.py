@@ -40,11 +40,11 @@ def page_credits(session, user):
 
         if rows:
             total_du = sum(float(r[1]) for r in rows)
-            st.metric("Total des créances ouvertes", f"{total_du:,.0f} FCFA")
+            st.metric("Total des créances ouvertes", f"{total_du:,.0f} MRU")
             st.divider()
             df = pd.DataFrame([{
                 "Client":           r[0],
-                "Total restant dû": f"{float(r[1]):,.0f} FCFA",
+                "Total restant dû": f"{float(r[1]):,.0f} MRU",
             } for r in rows])
             render_dataframe(df)
         else:
@@ -68,14 +68,14 @@ def page_credits(session, user):
                     [c.id_credit for c in credits_ouverts],
                     format_func=lambda i: next(
                         f"#{c.id_credit} — {c.client.nom_client} "
-                        f"(Reste : {float(c.montant_restant):,.0f} FCFA)"
+                        f"(Reste : {float(c.montant_restant):,.0f} MRU)"
                         for c in credits_ouverts if c.id_credit == i
                     ),
                     key="encaiss_select",
                 )
                 cr = session.get(Credit, cid)
                 montant = st.number_input(
-                    "Montant encaissé (FCFA)",
+                    "Montant encaissé (MRU)",
                     min_value=0.01,
                     max_value=float(cr.montant_restant),
                     step=100.0,
@@ -83,7 +83,7 @@ def page_credits(session, user):
                 )
                 st.caption(
                     f"Reste après versement : "
-                    f"**{float(cr.montant_restant) - montant:,.0f} FCFA**"
+                    f"**{float(cr.montant_restant) - montant:,.0f} MRU**"
                 )
                 btn = st.button(
                     "💵 Enregistrer le versement",
@@ -111,11 +111,11 @@ def page_credits(session, user):
                     )
                 else:
                     log_action(session, user.id_user,
-                               f"Paiement partiel crédit #{cid} : {float(m):,.0f} FCFA")
+                               f"Paiement partiel crédit #{cid} : {float(m):,.0f} MRU")
                     session.commit()
                     st.toast(
-                        f"💰 Versement de **{float(m):,.0f} FCFA** enregistré. "
-                        f"Reste : **{float(cr.montant_restant):,.0f} FCFA**",
+                        f"💰 Versement de **{float(m):,.0f} MRU** enregistré. "
+                        f"Reste : **{float(cr.montant_restant):,.0f} MRU**",
                         icon="💰",
                     )
                 st.rerun()
@@ -132,15 +132,15 @@ def page_credits(session, user):
             total_du    = sum(float(c.montant_restant) for c in credits_all if c.statut == "Ouvert")
             total_solde = sum(float(c.montant)         for c in credits_all if c.statut == "Soldé")
             m1, m2, m3 = st.columns(3)
-            m1.metric("Créances ouvertes", f"{total_du:,.0f} FCFA")
-            m2.metric("Total soldé",       f"{total_solde:,.0f} FCFA")
+            m1.metric("Créances ouvertes", f"{total_du:,.0f} MRU")
+            m2.metric("Total soldé",       f"{total_solde:,.0f} MRU")
             m3.metric("Nb crédits",        len(credits_all))
             st.divider()
             df = pd.DataFrame([{
                 "N° Crédit": c.id_credit,
                 "Client":    c.client.nom_client if c.client else "—",
-                "Montant":   f"{float(c.montant):,.0f} FCFA",
-                "Restant":   f"{float(c.montant_restant):,.0f} FCFA",
+                "Montant":   f"{float(c.montant):,.0f} MRU",
+                "Restant":   f"{float(c.montant_restant):,.0f} MRU",
                 "Échéance":  c.date_echeance.strftime("%d/%m/%Y") if c.date_echeance else "—",
                 "Statut":    "🟢 Soldé" if c.statut == "Soldé" else "🟠 Ouvert",
             } for c in credits_all])
@@ -165,7 +165,7 @@ def page_credits(session, user):
                 [c.id_credit for c in credits_mod],
                 format_func=lambda i: next(
                     f"#{c.id_credit} — {c.client.nom_client} "
-                    f"(Reste: {float(c.montant_restant):,.0f} FCFA)"
+                    f"(Reste: {float(c.montant_restant):,.0f} MRU)"
                     for c in credits_mod if c.id_credit == i
                 ),
                 key="report_select",

@@ -176,8 +176,8 @@ def page_clients(session, user):
 
             m1, m2, m3 = st.columns(3)
             m1.metric("Commandes",   nb_cmd)
-            m2.metric("Total achats", f"{float(total_achats):,.0f} FCFA")
-            m3.metric("Solde crédit", f"{float(solde):,.0f} FCFA")
+            m2.metric("Total achats", f"{float(total_achats):,.0f} MRU")
+            m3.metric("Solde crédit", f"{float(solde):,.0f} MRU")
 
             ventes = session.scalars(
                 select(Vente).where(Vente.id_client == cid).order_by(Vente.date.desc())
@@ -187,7 +187,7 @@ def page_clients(session, user):
                 render_dataframe(pd.DataFrame([{
                     "Facture": v.numero_facture or f"#{v.id_vente}",
                     "Date":    v.date.strftime("%d/%m/%Y"),
-                    "TTC":     f"{float(v.montant_total):,.0f} FCFA",
+                    "TTC":     f"{float(v.montant_total):,.0f} MRU",
                     "Mode":    v.mode_paiement,
                     "Statut":  v.statut,
                 } for v in ventes]))

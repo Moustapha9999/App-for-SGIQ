@@ -66,8 +66,8 @@ def page_produits(session, user):
             desig = c2.text_input("Désignation *",  placeholder="Ciment CEM II 50kg")
             cat   = c1.selectbox("Catégorie *", CATEGORIES)
             unite = c2.selectbox("Unité", UNITES)
-            pa    = c1.number_input("Prix achat (FCFA)",  min_value=0.0, step=1.0)
-            pv    = c2.number_input("Prix vente (FCFA)",  min_value=0.0, step=1.0)
+            pa    = c1.number_input("Prix achat (MRU)",  min_value=0.0, step=1.0)
+            pv    = c2.number_input("Prix vente (MRU)",  min_value=0.0, step=1.0)
             stock = c1.number_input("Stock initial", min_value=0, step=1, value=0)
             smin  = c2.number_input("Stock minimum", min_value=0, step=1, value=5)
             emp   = c1.text_input("Emplacement", placeholder="Zone A-1")
@@ -75,7 +75,7 @@ def page_produits(session, user):
 
             marge = calculer_marge(Decimal(str(pa)), Decimal(str(pv)))
             marge_pct = (float(marge) / pa * 100) if pa > 0 else 0
-            st.info(f"💡 Marge calculée : **{float(marge):,.0f} FCFA** ({marge_pct:.1f} %)")
+            st.info(f"💡 Marge calculée : **{float(marge):,.0f} MRU** ({marge_pct:.1f} %)")
 
             submitted = st.form_submit_button("💾 Enregistrer", type="primary")
 

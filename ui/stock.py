@@ -37,7 +37,7 @@ def page_stock(session, user):
         total_val = sum(float(p.stock * p.prix_achat) for p in produits)
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Produits actifs",     len(produits))
-        c2.metric("Valorisation totale", f"{total_val:,.0f} FCFA")
+        c2.metric("Valorisation totale", f"{total_val:,.0f} MRU")
         c3.metric("🔴 Ruptures",
                   len([p for p in produits if p.stock == 0]))
         c4.metric("🟡 Stocks faibles",

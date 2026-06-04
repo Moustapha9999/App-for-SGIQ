@@ -56,7 +56,7 @@ def seed_if_empty(session: Session):
         "societe_telephone": "+221 33 820 00 00",
         "societe_email":     "contact@sgiq.sn",
         "societe_nif":       "SN-1234567890",
-        "devise":            "FCFA",
+        "devise":            "MRU",
         "tva":               str(TVA_DEFAULT),
         "facture_prefixe":   "FC",
     }

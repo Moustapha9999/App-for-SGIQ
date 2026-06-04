@@ -298,19 +298,19 @@ def login_page():
                 finally:
                     session.close()
 
-        with st.expander("Comptes de démonstration"):
-            st.markdown("""
-| Rôle | Username | Mot de passe |
-|------|----------|--------------|
-| Admin | `admin` | `admin123` |
-| Caissier | `caissier` | `caissier123` |
-| Magasinier | `magasinier` | `magasin123` |
-            """)
+#         with st.expander("Comptes de démonstration"):
+#             st.markdown("""
+# | Rôle | Username | Mot de passe |
+# |------|----------|--------------|
+# | Admin | `admin` | `admin123` |
+# | Caissier | `caissier` | `caissier123` |
+# | Magasinier | `magasinier` | `magasin123` |
+#             """)
 
         # Pied de page
         st.markdown("""
         <p style="text-align:center; color:#CBD5E1; font-size:0.75rem; margin-top:1.5rem;">
-            SGIQ v1.0 · © 2025 · Tous droits réservés
+            SGIQ v1.0 · © 2026 · Tous droits réservés
         </p>
         """, unsafe_allow_html=True)
 

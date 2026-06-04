@@ -1,3 +1,5 @@
+# .streamlit/config.toml
+
 [theme]
 base = "light"
 primaryColor = "#2563EB"
@@ -13,4 +15,3 @@ enableXsrfProtection = false
 
 [browser]
 gatherUsageStats = false
-

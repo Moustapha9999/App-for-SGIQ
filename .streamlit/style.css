@@ -1,8 +1,8 @@
-/* SGIQ — style.css complémentaire
-   Ce fichier est chargé EN PLUS du CSS inline de app.py
-   Ne pas redéfinir les règles sidebar ici pour éviter les conflits */
+/* SGIQ  style.css complmentaire
+   Ce fichier est charg EN PLUS du CSS inline de app.py
+   Ne pas redfinir les rgles sidebar ici pour viter les conflits */
 
-/* ── Variables ── */
+/*  Variables  */
 :root {
   --blue-600: #2563EB;
   --blue-700: #1D4ED8;
@@ -11,14 +11,14 @@
   --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
 }
 
-/* ── Metric hover ── */
+/*  Metric hover  */
 [data-testid="metric-container"]:hover {
   box-shadow: var(--shadow-md) !important;
   transform: translateY(-1px);
   transition: all 0.2s;
 }
 
-/* ── Primary button animation ── */
+/*  Primary button animation  */
 .stButton button[kind="primary"] {
   box-shadow: 0 1px 3px rgba(37,99,235,0.3) !important;
 }
@@ -27,20 +27,217 @@
   transform: translateY(-1px);
 }
 
-/* ── Alert border gauche ── */
+/*  Alert border gauche  */
 .stAlert {
   border-left-width: 4px !important;
 }
 
-/* ── Toast ── */
+/*  Toast  */
 [data-testid="stToast"] {
   border-radius: var(--radius) !important;
   font-size: 0.875rem !important;
 }
 
-/* ── Expander ── */
+/*  Expander  */
 .streamlit-expanderHeader {
   font-weight: 500 !important;
   font-size: 0.875rem !important;
   border-radius: var(--radius) !important;
+}
+/* 
+   SGIQ  Responsive Mobile / Tablette
+    */
+
+/*  Mobile <= 768px  */
+@media (max-width: 768px) {
+
+    /* Sidebar icnes seulement */
+    [data-testid="stSidebar"] {
+        min-width: 64px !important;
+        max-width: 64px !important;
+        width:     64px !important;
+    }
+    [data-testid="stSidebar"] > div:first-child {
+        padding: 8px 6px !important;
+    }
+    /* Cache les textes radio, garde les emojis */
+    [data-testid="stSidebar"] .stRadio label {
+        font-size: 0 !important;
+        padding: 8px 0 !important;
+        text-align: center !important;
+        display: block !important;
+    }
+    [data-testid="stSidebar"] .stRadio label::first-letter {
+        font-size: 1.3rem !important;
+    }
+    /* Cache nom utilisateur et version */
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] div[style*="font-size:0.7"] {
+        display: none !important;
+    }
+
+    /* Padding contenu principal rduit */
+    .block-container {
+        padding: 0.5rem 0.4rem !important;
+        max-width: 100% !important;
+    }
+
+    /* Colonnes Streamlit  empiles verticalement */
+    [data-testid="stHorizontalBlock"] {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    [data-testid="stHorizontalBlock"] > [data-testid="stVerticalBlock"] {
+        width: 100% !important;
+        min-width: 100% !important;
+        flex: none !important;
+    }
+
+    /* Tabs scrollables horizontalement */
+    .stTabs [data-baseweb="tab-list"] {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        white-space: nowrap !important;
+        padding: 6px 12px !important;
+        font-size: 0.78rem !important;
+    }
+
+    /* Titres plus petits */
+    h1 { font-size: 1.1rem !important; }
+    h2 { font-size: 0.95rem !important; }
+    h3 { font-size: 0.85rem !important; }
+
+    /* Inputs full width */
+    .stTextInput input,
+    .stNumberInput input,
+    .stSelectbox > div {
+        font-size: 16px !important; /* vite le zoom iOS */
+    }
+
+    /* Boutons touch-friendly */
+    .stButton button {
+        min-height: 44px !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* DataFrames scrollables */
+    [data-testid="stDataFrame"] {
+        overflow-x: auto !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* Metrics plus compacts */
+    [data-testid="metric-container"] {
+        padding: 10px 12px !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 1.2rem !important;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 0.65rem !important;
+    }
+}
+
+/*  Tablette 7691024px  */
+@media (min-width: 769px) and (max-width: 1024px) {
+
+    .block-container {
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+    }
+
+    /* 2 colonnes au lieu de 4 pour les KPIs */
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+    }
+    [data-testid="stHorizontalBlock"] > [data-testid="stVerticalBlock"] {
+        min-width: 48% !important;
+        flex: 1 1 48% !important;
+    }
+
+    h1 { font-size: 1.3rem !important; }
+    h2 { font-size: 1rem !important; }
+
+    [data-testid="stMetricValue"] {
+        font-size: 1.35rem !important;
+    }
+}
+
+/*  KPI grid natif responsive  */
+.kpi-grid {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+@media (min-width: 900px)  { .kpi-grid { grid-template-columns: repeat(4,1fr); } }
+@media (min-width: 500px) and (max-width: 899px) { .kpi-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 499px)  { .kpi-grid { grid-template-columns: 1fr; } }
+
+/*  Bouton dconnexion mobile  */
+@media (max-width: 768px) {
+    [data-testid="stSidebar"] .stButton button {
+        min-height: 40px !important;
+        padding: 6px !important;
+        font-size: 0 !important; /* cache le texte */
+    }
+    [data-testid="stSidebar"] .stButton button::before {
+        content: "\1F6AA";
+        font-size: 1.2rem !important;
+    }
+}
+
+/*  Formulaires mobiles  */
+@media (max-width: 768px) {
+
+    /* Forms en pleine largeur */
+    [data-testid="stForm"] {
+        padding: 1rem !important;
+    }
+
+    /* Selectbox accessible */
+    [data-testid="stSelectbox"] select,
+    [data-testid="stSelectbox"] > div > div {
+        font-size: 16px !important;
+    }
+
+    /* Alertes compactes */
+    .stAlert {
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Toast position */
+    [data-testid="stToast"] {
+        bottom: 16px !important;
+        right: 8px !important;
+        left: 8px !important;
+        max-width: calc(100vw - 16px) !important;
+    }
+
+    /* Header page */
+    [data-testid="stAppViewBlockContainer"] {
+        padding-top: 0.5rem !important;
+    }
+}
+
+/*  Graphiques Plotly mobiles  */
+@media (max-width: 768px) {
+    .js-plotly-plot .plotly .modebar {
+        display: none !important;
+    }
+}
+
+/*  Login page mobile  */
+@media (max-width: 600px) {
+    /* Centre la carte login */
+    [data-testid="stHorizontalBlock"] > [data-testid="stVerticalBlock"]:first-child,
+    [data-testid="stHorizontalBlock"] > [data-testid="stVerticalBlock"]:last-child {
+        display: none !important;
+    }
+    [data-testid="stHorizontalBlock"] > [data-testid="stVerticalBlock"] {
+        min-width: 100% !important;
+        padding: 0 12px !important;
+    }
 }

@@ -12,4 +12,5 @@ altair
 psycopg2-binary
 python-dotenv
 Pillow
+pdfplumber
 

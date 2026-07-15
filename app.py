@@ -193,22 +193,49 @@ def _load_css(dark: bool = False):
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
 
     html, body, [class*="css"] { font-family: 'DM Sans', sans-serif !important; }
-    #MainMenu, footer, header, .stDeployButton { visibility: hidden; display: none; }
+    #MainMenu, footer, .stDeployButton { visibility: hidden; display: none; }
 
-    [data-testid="collapsedControl"],
-    [data-testid="stSidebarCollapseButton"],
-    button[data-testid="collapsedControl"],
-    section[data-testid="stSidebar"] button[kind="header"] {
-        display: none !important;
-        visibility: hidden !important;
-        width: 0 !important;
-        pointer-events: none !important;
-    }
-
+    /* Sidebar toujours visible (fix déploiement / collapse Streamlit) */
+    section[data-testid="stSidebar"],
     [data-testid="stSidebar"] {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      transform: none !important;
+      translate: none !important;
+      margin-left: 0 !important;
+      left: 0 !important;
+      position: relative !important;
+      width: 17.5rem !important;
+      min-width: 17.5rem !important;
+      max-width: 20rem !important;
       background: linear-gradient(180deg, #152A45 0%, #1E3A5F 55%, #16304F 100%) !important;
       border-right: 1px solid rgba(255,255,255,0.06) !important;
+      z-index: 100 !important;
     }
+    section[data-testid="stSidebar"] > div {
+      width: 17.5rem !important;
+      min-width: 17.5rem !important;
+    }
+    /* Empêche le panneau de partir hors écran quand collapsed */
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+      display: flex !important;
+      transform: none !important;
+      margin-left: 0 !important;
+    }
+
+    /* Bouton collapse : on le cache car la sidebar reste ouverte */
+    [data-testid="stSidebarCollapseButton"] {
+      display: none !important;
+    }
+    /* Bouton d'ouverture : visible au cas où (filet de sécurité) */
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] {
+      display: flex !important;
+      visibility: visible !important;
+      z-index: 999999 !important;
+    }
+
     [data-testid="stSidebar"] * { color: #CBD5E1 !important; }
     [data-testid="stSidebar"] strong, [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: #F1F5F9 !important; }

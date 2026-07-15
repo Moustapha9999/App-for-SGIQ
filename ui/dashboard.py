@@ -147,29 +147,15 @@ def page_dashboard(session, user):
     # ── CSS responsive ────────────────────────────────────────────────────
     st.markdown("""
     <style>
-    /* ── Détection mobile via CSS ── */
+    /* KPI / charts responsive — ne pas toucher à la sidebar ici */
 
-    /* Sidebar réduite sur mobile */
+    /* Padding principal réduit sur petit écran */
     @media (max-width: 768px) {
-        [data-testid="stSidebar"] {
-            min-width: 60px !important;
-            max-width: 60px !important;
-            width: 60px !important;
-        }
-        [data-testid="stSidebar"] .sidebar-content {
-            padding: 8px 4px !important;
-        }
-        /* Cache les textes sidebar sur mobile, garde les icônes */
-        [data-testid="stSidebar"] .stRadio label span:last-child {
-            display: none !important;
-        }
-        /* Padding principal réduit */
         .block-container {
             padding-left: 0.5rem !important;
             padding-right: 0.5rem !important;
             padding-top: 0.5rem !important;
         }
-        /* Colonnes empilées sur mobile */
         [data-testid="stHorizontalBlock"] {
             flex-wrap: wrap !important;
         }
@@ -177,7 +163,6 @@ def page_dashboard(session, user):
             min-width: 100% !important;
             flex: 1 1 100% !important;
         }
-        /* Texte plus petit */
         .stMarkdown p { font-size: 0.85rem !important; }
         h1 { font-size: 1.1rem !important; }
         h2 { font-size: 0.95rem !important; }

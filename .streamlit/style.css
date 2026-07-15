@@ -48,14 +48,17 @@
    SGIQ  Responsive Mobile / Tablette
     */
 
-/*  Mobile <= 768px  */
-@media (max-width: 768px) {
+/*  Mobile <= 640px — sidebar compacte mais toujours visible  */
+@media (max-width: 640px) {
 
-    /* Sidebar icnes seulement */
-    [data-testid="stSidebar"] {
-        min-width: 64px !important;
-        max-width: 64px !important;
-        width:     64px !important;
+    [data-testid="stSidebar"],
+    section[data-testid="stSidebar"] {
+        min-width: 4.5rem !important;
+        max-width: 4.5rem !important;
+        width:     4.5rem !important;
+        display: flex !important;
+        transform: none !important;
+        margin-left: 0 !important;
     }
     [data-testid="stSidebar"] > div:first-child {
         padding: 8px 6px !important;
@@ -70,19 +73,14 @@
     [data-testid="stSidebar"] .stRadio label::first-letter {
         font-size: 1.3rem !important;
     }
-    /* Cache nom utilisateur et version */
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] div[style*="font-size:0.7"] {
-        display: none !important;
-    }
 
-    /* Padding contenu principal rduit */
+    /* Padding contenu principal réduit */
     .block-container {
         padding: 0.5rem 0.4rem !important;
         max-width: 100% !important;
     }
 
-    /* Colonnes Streamlit  empiles verticalement */
+    /* Colonnes Streamlit empilées verticalement */
     [data-testid="stHorizontalBlock"] {
         flex-direction: column !important;
         gap: 10px !important;
@@ -113,7 +111,7 @@
     .stTextInput input,
     .stNumberInput input,
     .stSelectbox > div {
-        font-size: 16px !important; /* vite le zoom iOS */
+        font-size: 16px !important;
     }
 
     /* Boutons touch-friendly */

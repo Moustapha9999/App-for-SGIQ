@@ -3,6 +3,8 @@ from sqlalchemy import select
 
 from database.models import Log, Parametre
 from services.logging_service import log_action
+from utils.dialogs import request_dialog, run_confirm_dialog
+from utils.ui import page_header
 
 
 def _set_param(session, cle: str, valeur: str):
@@ -19,10 +21,11 @@ def _get_val(session, cle, default=""):
 
 
 def page_parametres(session, user):
-    st.title("⚙️ Paramètres")
+    page_header("Paramètres", "Société, facturation, apparence et maintenance", "⚙️")
 
-    tab_soc, tab_fact, tab_email, tab_backup, tab_logs = st.tabs([
-        "🏢 Société", "🧾 Facturation", "📧 E-mail", "💾 Sauvegardes", "📋 Journal",
+    tab_soc, tab_fact, tab_email, tab_apparence, tab_backup, tab_logs = st.tabs([
+        "🏢 Société", "🧾 Facturation", "📧 E-mail",
+        "🎨 Apparence", "💾 Sauvegardes", "📋 Journal",
     ])
 
     # ── Société ───────────────────────────────────────────────────────────
@@ -99,6 +102,64 @@ def page_parametres(session, user):
             session.commit()
             st.toast("✅ Configuration SMTP enregistrée !", icon="✅")
 
+    # ── Apparence ─────────────────────────────────────────────────────────
+    with tab_apparence:
+        st.subheader("Thème de l'interface")
+        st.caption("Le mode sombre s'applique immédiatement à toute l'application.")
+
+        dark = st.session_state.get("dark_mode", False)
+        col_a, col_b = st.columns(2)
+
+        with col_a:
+            st.markdown(
+                f"""
+                <div style="
+                  background:{'#1E293B' if dark else '#FFFFFF'};
+                  border:1px solid {'#334155' if dark else '#E2E8F0'};
+                  border-radius:14px; padding:1.25rem; margin-bottom:1rem;
+                ">
+                  <div style="font-size:1.6rem; margin-bottom:0.4rem;">
+                    {'🌙' if dark else '☀️'}
+                  </div>
+                  <div style="font-weight:600; font-size:1rem;
+                    color:{'#F1F5F9' if dark else '#0F172A'};">
+                    Mode {'sombre' if dark else 'clair'} actif
+                  </div>
+                  <div style="font-size:0.82rem; margin-top:0.25rem;
+                    color:{'#94A3B8' if dark else '#64748B'};">
+                    Préférence enregistrée pour tous les utilisateurs.
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with col_b:
+            new_dark = st.toggle(
+                "Activer le mode sombre",
+                value=dark,
+                key="toggle_dark_mode",
+                help="Change le thème clair / sombre de SGIQ",
+            )
+            if new_dark != dark:
+                st.session_state.dark_mode = new_dark
+                _set_param(session, "theme", "dark" if new_dark else "light")
+                log_action(
+                    session, user.id_user,
+                    f"Thème passé en mode {'sombre' if new_dark else 'clair'}",
+                )
+                session.commit()
+                st.toast(
+                    "🌙 Mode sombre activé" if new_dark else "☀️ Mode clair activé",
+                    icon="🎨",
+                )
+                st.rerun()
+
+            st.info(
+                "Astuce : le thème est mémorisé dans les paramètres "
+                "et se recharge à chaque connexion."
+            )
+
     # ── Sauvegardes ───────────────────────────────────────────────────────
     with tab_backup:
         from datetime import datetime
@@ -113,15 +174,26 @@ def page_parametres(session, user):
         c2.metric("Sauvegardes stockées", len(backups))
 
         if c1.button("💾 Sauvegarder maintenant", type="primary"):
-            with st.spinner("Sauvegarde en cours..."):
+            request_dialog("_backup_now")
+
+        if "_backup_now" in st.session_state:
+            def _do_backup():
                 path = create_backup()
-            if path:
-                log_action(session, user.id_user, f"Sauvegarde manuelle {path.name}")
-                session.commit()
-                st.toast(f"✅ Sauvegarde créée : **{path.name}**", icon="💾")
-                st.rerun()
-            else:
-                st.warning("Sauvegarde disponible uniquement avec SQLite.")
+                if path:
+                    log_action(session, user.id_user, f"Sauvegarde manuelle {path.name}")
+                    session.commit()
+                    st.toast(f"✅ Sauvegarde créée : **{path.name}**", icon="💾")
+                else:
+                    st.warning("Sauvegarde disponible uniquement avec SQLite.")
+
+            run_confirm_dialog(
+                "_backup_now",
+                "Lancer une sauvegarde ?",
+                "Une copie de la base sera créée dans le dossier de backups.",
+                _do_backup,
+                confirm_label="Sauvegarder",
+                icon="💾",
+            )
 
         if backups:
             st.divider()

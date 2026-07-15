@@ -2,13 +2,16 @@ import pandas as pd
 import streamlit as st
 from sqlalchemy import func, select
 
+from config import MODES_PAIEMENT, index_mode_paiement
 from database.models import Achat, Fournisseur
 from services.logging_service import log_action
 from utils.crud_ui import render_dataframe
+from utils.dialogs import request_dialog, run_delete_dialog
+from utils.ui import page_header
 
 
 def page_fournisseurs(session, user):
-    st.title("🏭 Gestion des Fournisseurs")
+    page_header("Gestion des Fournisseurs", "Fournisseurs, contacts et historique d'achats", "🏭")
 
     tab_liste, tab_ajouter, tab_modifier, tab_supprimer, tab_hist = st.tabs(
         ["📋 Liste", "➕ Ajouter", "✏️ Modifier", "🗑️ Supprimer", "📜 Historique"]
@@ -40,7 +43,7 @@ def page_fournisseurs(session, user):
             tel    = c1.text_input("Téléphone",  placeholder="33 000 00 00")
             email  = c2.text_input("Email",      placeholder="contact@fourn.sn")
             adr    = st.text_input("Adresse",    placeholder="Zone Industrielle, Dakar")
-            mp     = st.selectbox("Mode paiement", ["Espèces", "Virement", "Chèque"])
+            mp     = st.selectbox("Mode paiement", MODES_PAIEMENT)
             statut = st.selectbox("Statut", ["Actif", "Inactif"])
             submitted = st.form_submit_button("💾 Enregistrer", type="primary")
 
@@ -82,10 +85,8 @@ def page_fournisseurs(session, user):
                 tel_e  = c1.text_input("Téléphone", value=f.telephone or "")
                 email_e= c2.text_input("Email",     value=f.email or "")
                 adr_e  = st.text_input("Adresse",   value=f.adresse or "")
-                mp_list = ["Espèces", "Virement", "Chèque"]
-                mp_e   = st.selectbox("Mode paiement", mp_list,
-                            index=mp_list.index(f.mode_paiement)
-                            if f.mode_paiement in mp_list else 0)
+                mp_e   = st.selectbox("Mode paiement", MODES_PAIEMENT,
+                            index=index_mode_paiement(f.mode_paiement, MODES_PAIEMENT))
                 st_e   = st.selectbox("Statut", ["Actif", "Inactif"],
                             index=0 if f.statut == "Actif" else 1)
                 update = st.form_submit_button("💾 Mettre à jour", type="primary")
@@ -125,15 +126,21 @@ def page_fournisseurs(session, user):
                 f"⚠️ Vous allez supprimer **{f.raison_sociale}**. "
                 "Cette action est irréversible."
             )
-            confirmer = st.checkbox("Je confirme la suppression", key="del_fourn_confirm")
             if st.button("🗑️ Supprimer définitivement", type="primary",
-                         disabled=not confirmer, key="del_fourn_btn"):
-                nom_supp = f.raison_sociale
-                log_action(session, user.id_user, f"Suppression fournisseur {nom_supp}")
-                session.delete(f)
-                session.commit()
-                st.toast(f"🗑️ Fournisseur **{nom_supp}** supprimé.", icon="🗑️")
-                st.rerun()
+                         key="del_fourn_btn"):
+                request_dialog("_del_fourn", fid)
+
+            if "_del_fourn" in st.session_state:
+                pending = session.get(Fournisseur, st.session_state["_del_fourn"])
+                if pending:
+                    def _delete():
+                        nom_supp = pending.raison_sociale
+                        log_action(session, user.id_user, f"Suppression fournisseur {nom_supp}")
+                        session.delete(pending)
+                        session.commit()
+                        st.toast(f"🗑️ Fournisseur **{nom_supp}** supprimé.", icon="🗑️")
+
+                    run_delete_dialog("_del_fourn", pending.raison_sociale, _delete)
 
     # ── Historique ────────────────────────────────────────────────────────
     with tab_hist:

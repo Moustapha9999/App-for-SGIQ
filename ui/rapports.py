@@ -11,6 +11,7 @@ from database.models import (
     Achat, Client, Credit, Fournisseur,
     LigneVente, Parametre, Produit, Vente,
 )
+from utils.ui import page_header
 
 
 def _get_devise(session) -> str:
@@ -23,7 +24,7 @@ def _fmt(val, devise: str) -> str:
 
 
 def page_rapports(session, user):
-    st.title("📈 Rapports & Analyses")
+    page_header("Rapports & Analyses", "Ventes, achats, stock, crédits et rentabilité", "📈")
     devise = _get_devise(session)
 
     tab_ventes, tab_achats, tab_stock, tab_credits, tab_rentabilite = st.tabs([

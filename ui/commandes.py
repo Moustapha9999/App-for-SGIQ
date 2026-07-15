@@ -5,14 +5,17 @@ import streamlit as st
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
+from config import MODES_PAIEMENT_VENTE
 from database.models import Client, Commande, LigneCommande, Produit, Vente, LigneVente
 from services.invoice_helpers import get_tva, next_facture_number
 from services.logging_service import log_action
 from services.stock_service import mouvement_stock
+from utils.dialogs import request_dialog, run_delete_dialog
+from utils.ui import page_header
 
 
 def page_commandes(session, user):
-    st.header("📋 Gestion des Commandes")
+    page_header("Gestion des Commandes", "Commandes clients et suivi des statuts", "📋")
     tab_nouvelle, tab_suivi, tab_modifier, tab_supprimer = st.tabs(
         ["Nouvelle Commande", "Suivi", "Modifier statut", "Supprimer"]
     )
@@ -28,7 +31,7 @@ def page_commandes(session, user):
                 key="cmd_nouvelle_client",
             )
             mp = st.selectbox(
-                "Mode paiement", ["Espèces", "Crédit", "Virement"],
+                "Mode paiement", MODES_PAIEMENT_VENTE,
                 key="cmd_nouvelle_mp",
             )
             if "lignes_cmd" not in st.session_state:
@@ -217,11 +220,18 @@ def page_commandes(session, user):
                 key="cmd_supprimer_select",
             )
             if st.button("🗑️ Supprimer", type="primary", key="cmd_btn_supprimer"):
-                cmd = session.get(Commande, cmd_id)
-                session.delete(cmd)
-                log_action(session, user.id_user, f"Suppression commande #{cmd_id}")
-                session.commit()
-                st.success("Commande supprimée.")
-                st.rerun()
+                request_dialog("_del_cmd", cmd_id)
+
+            if "_del_cmd" in st.session_state:
+                pending_id = st.session_state["_del_cmd"]
+
+                def _delete():
+                    cmd = session.get(Commande, pending_id)
+                    session.delete(cmd)
+                    log_action(session, user.id_user, f"Suppression commande #{pending_id}")
+                    session.commit()
+                    st.toast(f"Commande #{pending_id} supprimée.", icon="🗑️")
+
+                run_delete_dialog("_del_cmd", f"commande #{pending_id}", _delete)
         else:
             st.info("Aucune commande en attente à supprimer.")

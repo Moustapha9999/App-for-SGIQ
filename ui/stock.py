@@ -6,10 +6,11 @@ from database.models import MouvementStock, Produit
 from services.logging_service import log_action
 from services.stock_service import mouvement_stock
 from utils.crud_ui import render_dataframe
+from utils.ui import page_header
 
 
 def page_stock(session, user):
-    st.title("📊 Gestion du Stock")
+    page_header("Gestion du Stock", "État, mouvements, ajustements et alertes", "📊")
 
     tab_etat, tab_mouv, tab_ajust, tab_alertes = st.tabs(
         ["📦 État Stock", "🔄 Mouvements", "✏️ Ajustement", "🚨 Alertes"]

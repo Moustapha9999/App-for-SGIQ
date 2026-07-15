@@ -3,14 +3,31 @@ from decimal import Decimal
 import pandas as pd
 import streamlit as st
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 
 from database.models import Client, Commande, Credit, Vente
 from services.logging_service import log_action
 from utils.crud_ui import render_dataframe
+from utils.dialogs import request_dialog, run_confirm_dialog, run_delete_dialog
+from utils.ui import page_header
+
+
+def _client_a_historique(session, cid: int) -> dict[str, int]:
+    return {
+        "ventes": session.scalar(
+            select(func.count()).select_from(Vente).where(Vente.id_client == cid)
+        ) or 0,
+        "commandes": session.scalar(
+            select(func.count()).select_from(Commande).where(Commande.id_client == cid)
+        ) or 0,
+        "credits": session.scalar(
+            select(func.count()).select_from(Credit).where(Credit.id_client == cid)
+        ) or 0,
+    }
 
 
 def page_clients(session, user):
-    st.title("👤 Gestion des Clients")
+    page_header("Gestion des Clients", "Liste, ajout, modification et historique", "👤")
 
     tab_liste, tab_ajouter, tab_modifier, tab_supprimer, tab_hist = st.tabs(
         ["📋 Liste", "➕ Ajouter", "✏️ Modifier", "🗑️ Supprimer", "📜 Historique"]
@@ -133,20 +150,94 @@ def page_clients(session, user):
                 key="del_client_select",
             )
             c = session.get(Client, cid)
+            hist = _client_a_historique(session, cid)
+            total_refs = sum(hist.values())
 
-            st.warning(
-                f"⚠️ Vous allez supprimer **{c.nom_client}**. "
-                "Cette action est irréversible."
-            )
-            confirmer = st.checkbox("Je confirme la suppression", key="del_client_confirm")
-            if st.button("🗑️ Supprimer définitivement", type="primary",
-                         disabled=not confirmer, key="del_client_btn"):
-                nom_supp = c.nom_client
-                log_action(session, user.id_user, f"Suppression client {nom_supp}")
-                session.delete(c)
-                session.commit()
-                st.toast(f"🗑️ Client **{nom_supp}** supprimé.", icon="🗑️")
-                st.rerun()
+            if total_refs > 0:
+                st.warning(
+                    f"**{c.nom_client}** a déjà un historique "
+                    f"({hist['ventes']} vente(s), {hist['commandes']} commande(s), "
+                    f"{hist['credits']} crédit(s)).\n\n"
+                    "Il ne peut pas être effacé définitivement — "
+                    "il sera **désactivé** (statut Inactif)."
+                )
+                btn_label = "🚫 Désactiver le client"
+                dlg_key = "_desact_client"
+            else:
+                st.warning(
+                    f"⚠️ Vous allez supprimer définitivement **{c.nom_client}**. "
+                    "Aucun historique lié."
+                )
+                btn_label = "🗑️ Supprimer définitivement"
+                dlg_key = "_del_client"
+
+            if st.button(btn_label, type="primary", key="del_client_btn"):
+                request_dialog(dlg_key, cid)
+
+            if "_desact_client" in st.session_state:
+                pending = session.get(Client, st.session_state["_desact_client"])
+                if pending:
+                    def _desactiver():
+                        pending.statut = "Inactif"
+                        log_action(
+                            session, user.id_user,
+                            f"Désactivation client {pending.nom_client} (historique existant)",
+                        )
+                        session.commit()
+                        st.toast(
+                            f"🚫 **{pending.nom_client}** désactivé (conservé pour l'historique).",
+                            icon="🚫",
+                        )
+
+                    run_confirm_dialog(
+                        "_desact_client",
+                        f"Désactiver {pending.nom_client} ?",
+                        "Le client restera dans l'historique, "
+                        "mais ne pourra plus être sélectionné pour de nouvelles ventes.",
+                        _desactiver,
+                        confirm_label="Désactiver",
+                        icon="🚫",
+                    )
+
+            if "_del_client" in st.session_state:
+                pending_id = st.session_state["_del_client"]
+                pending = session.get(Client, pending_id)
+                if pending:
+                    def _delete():
+                        nom_supp = pending.nom_client
+                        if sum(_client_a_historique(session, pending_id).values()) > 0:
+                            pending.statut = "Inactif"
+                            log_action(
+                                session, user.id_user,
+                                f"Désactivation client {nom_supp} (refs détectées)",
+                            )
+                            session.commit()
+                            st.toast(
+                                f"🚫 **{nom_supp}** désactivé (historique trouvé).",
+                                icon="🚫",
+                            )
+                            return
+                        try:
+                            log_action(session, user.id_user, f"Suppression client {nom_supp}")
+                            session.delete(pending)
+                            session.commit()
+                            st.toast(f"🗑️ Client **{nom_supp}** supprimé.", icon="🗑️")
+                        except IntegrityError:
+                            session.rollback()
+                            pending2 = session.get(Client, pending_id)
+                            if pending2:
+                                pending2.statut = "Inactif"
+                                log_action(
+                                    session, user.id_user,
+                                    f"Désactivation client {nom_supp} (contrainte FK)",
+                                )
+                                session.commit()
+                                st.toast(
+                                    f"🚫 **{nom_supp}** désactivé (lié à des documents).",
+                                    icon="🚫",
+                                )
+
+                    run_delete_dialog("_del_client", pending.nom_client, _delete)
 
     # ── Historique ────────────────────────────────────────────────────────
     with tab_hist:

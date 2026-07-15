@@ -4,12 +4,15 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 
-from database.models import Produit
+from database.models import LigneAchat, LigneCommande, LigneVente, MouvementStock, Produit
 from services.logging_service import log_action
 from services.stock_service import calculer_marge
 from utils.crud_ui import render_dataframe
+from utils.dialogs import request_dialog, run_confirm_dialog, run_delete_dialog
+from utils.ui import page_header
 
 CATEGORIES = [
     "Ciment", "Fer", "Peinture", "Électricité", "Plomberie",
@@ -18,8 +21,26 @@ CATEGORIES = [
 UNITES = ["Pièce", "Sac", "Mètre", "Rouleau", "Bidon", "Barre", "Boîte", "Kg"]
 
 
+def _produit_a_historique(session, code: str) -> dict[str, int]:
+    """Compteurs des références qui empêchent une suppression définitive."""
+    return {
+        "ventes": session.scalar(
+            select(func.count()).select_from(LigneVente).where(LigneVente.code_produit == code)
+        ) or 0,
+        "achats": session.scalar(
+            select(func.count()).select_from(LigneAchat).where(LigneAchat.code_produit == code)
+        ) or 0,
+        "commandes": session.scalar(
+            select(func.count()).select_from(LigneCommande).where(LigneCommande.code_produit == code)
+        ) or 0,
+        "mouvements": session.scalar(
+            select(func.count()).select_from(MouvementStock).where(MouvementStock.code_produit == code)
+        ) or 0,
+    }
+
+
 def page_produits(session, user):
-    st.title("📦 Gestion des Produits")
+    page_header("Gestion des Produits", "Catalogue, stocks minimum et import en masse", "📦")
 
     tab_liste, tab_ajouter, tab_import, tab_modifier, tab_supprimer, tab_cat = st.tabs([
         "📋 Liste", "➕ Ajouter", "📥 Import en masse",
@@ -181,18 +202,99 @@ def page_produits(session, user):
                 key="del_prod_select",
             )
             p = session.get(Produit, code)
-            st.warning(
-                f"⚠️ Vous allez supprimer **{p.designation}** ({p.code_produit})."
-            )
-            confirmer = st.checkbox("Je confirme", key="del_prod_confirm")
-            if st.button("🗑️ Supprimer", type="primary",
-                         disabled=not confirmer, key="del_prod_btn"):
-                nom_supp = p.designation
-                log_action(session, user.id_user, f"Suppression produit {code}")
-                session.delete(p)
-                session.commit()
-                st.toast(f"🗑️ Produit **{nom_supp}** supprimé.", icon="🗑️")
-                st.rerun()
+            hist = _produit_a_historique(session, code)
+            total_refs = sum(hist.values())
+
+            if total_refs > 0:
+                st.warning(
+                    f"**{p.designation}** est déjà utilisé dans l'historique "
+                    f"({hist['ventes']} vente(s), {hist['achats']} achat(s), "
+                    f"{hist['commandes']} commande(s), {hist['mouvements']} mouvement(s)).\n\n"
+                    "Il ne peut pas être effacé définitivement — "
+                    "il sera **désactivé** (statut Inactif)."
+                )
+                btn_label = "🚫 Désactiver le produit"
+                dlg_key = "_desact_prod"
+            else:
+                st.warning(
+                    f"⚠️ Vous allez supprimer définitivement **{p.designation}** "
+                    f"({p.code_produit}). Aucun historique lié."
+                )
+                btn_label = "🗑️ Supprimer définitivement"
+                dlg_key = "_del_prod"
+
+            if st.button(btn_label, type="primary", key="del_prod_btn"):
+                request_dialog(dlg_key, code)
+
+            if "_desact_prod" in st.session_state:
+                pending = session.get(Produit, st.session_state["_desact_prod"])
+                if pending:
+                    def _desactiver():
+                        pending.statut = "Inactif"
+                        log_action(
+                            session, user.id_user,
+                            f"Désactivation produit {pending.code_produit} (historique existant)",
+                        )
+                        session.commit()
+                        st.toast(
+                            f"🚫 **{pending.designation}** désactivé (conservé pour l'historique).",
+                            icon="🚫",
+                        )
+
+                    run_confirm_dialog(
+                        "_desact_prod",
+                        f"Désactiver {pending.designation} ?",
+                        "Le produit restera visible dans l'historique des ventes, "
+                        "mais ne pourra plus être utilisé.",
+                        _desactiver,
+                        confirm_label="Désactiver",
+                        icon="🚫",
+                    )
+
+            if "_del_prod" in st.session_state:
+                pending = session.get(Produit, st.session_state["_del_prod"])
+                if pending:
+                    def _delete():
+                        nom_supp = pending.designation
+                        code_supp = pending.code_produit
+                        # Re-vérifie au moment du commit (sécurité)
+                        if sum(_produit_a_historique(session, code_supp).values()) > 0:
+                            pending.statut = "Inactif"
+                            log_action(
+                                session, user.id_user,
+                                f"Désactivation produit {code_supp} (refs détectées)",
+                            )
+                            session.commit()
+                            st.toast(
+                                f"🚫 **{nom_supp}** désactivé (historique trouvé).",
+                                icon="🚫",
+                            )
+                            return
+                        try:
+                            log_action(session, user.id_user, f"Suppression produit {code_supp}")
+                            session.delete(pending)
+                            session.commit()
+                            st.toast(f"🗑️ Produit **{nom_supp}** supprimé.", icon="🗑️")
+                        except IntegrityError:
+                            session.rollback()
+                            pending2 = session.get(Produit, code_supp)
+                            if pending2:
+                                pending2.statut = "Inactif"
+                                log_action(
+                                    session, user.id_user,
+                                    f"Désactivation produit {code_supp} (contrainte FK)",
+                                )
+                                session.commit()
+                                st.toast(
+                                    f"🚫 **{nom_supp}** désactivé (lié à des documents).",
+                                    icon="🚫",
+                                )
+
+                    run_delete_dialog(
+                        "_del_prod",
+                        f"{pending.designation} ({pending.code_produit})",
+                        _delete,
+                    )
 
     # ── Catégories ────────────────────────────────────────────────────────
     with tab_cat:

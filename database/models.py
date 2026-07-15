@@ -73,7 +73,7 @@ class Fournisseur(Base):
     telephone:        Mapped[str | None] = mapped_column(String(30))
     adresse:          Mapped[str | None] = mapped_column(String(255))
     email:            Mapped[str | None] = mapped_column(String(120))
-    mode_paiement:    Mapped[str]        = mapped_column(String(30),  default="Espèces")
+    mode_paiement:    Mapped[str]        = mapped_column(String(40),  default="Cash")
     statut:           Mapped[str]        = mapped_column(String(20),  default="Actif")
 
     achats: Mapped[list["Achat"]] = relationship(back_populates="fournisseur")
@@ -139,7 +139,7 @@ class Achat(Base):
     date:           Mapped[datetime]= mapped_column(DateTime, server_default=func.now())
     id_fournisseur: Mapped[int]     = mapped_column(ForeignKey("fournisseurs.id_fournisseur"))
     montant_total:  Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
-    mode_paiement:  Mapped[str]     = mapped_column(String(30), default="Espèces")
+    mode_paiement:  Mapped[str]     = mapped_column(String(40), default="Cash")
     statut:         Mapped[str]     = mapped_column(String(30), default="Payé")
     id_user:        Mapped[int | None] = mapped_column(ForeignKey("utilisateurs.id_user"))
     annule:         Mapped[bool]    = mapped_column(Boolean, default=False)
@@ -180,7 +180,7 @@ class Vente(Base):
     remise:         Mapped[Decimal]    = mapped_column(Numeric(12, 2), default=0)
     tva:            Mapped[Decimal]    = mapped_column(Numeric(12, 2), default=0)
     montant_total:  Mapped[Decimal]    = mapped_column(Numeric(14, 2), default=0)
-    mode_paiement:  Mapped[str]        = mapped_column(String(30), default="Espèces")
+    mode_paiement:  Mapped[str]        = mapped_column(String(40), default="Cash")
     statut:         Mapped[str]        = mapped_column(String(30), default="Payée")
     id_user:        Mapped[int | None] = mapped_column(ForeignKey("utilisateurs.id_user"))
     numero_facture: Mapped[str | None] = mapped_column(String(40), unique=True)
@@ -243,6 +243,7 @@ class PaiementCredit(Base):
     id_paiement:   Mapped[int]     = mapped_column(Integer, primary_key=True, autoincrement=True)
     id_credit:     Mapped[int]     = mapped_column(ForeignKey("credits.id_credit"))
     montant:       Mapped[Decimal] = mapped_column(Numeric(14, 2))
+    mode_paiement: Mapped[str]     = mapped_column(String(40), default="Cash")
     date_paiement: Mapped[datetime]= mapped_column(DateTime, server_default=func.now())
 
     credit: Mapped["Credit"] = relationship(back_populates="paiements")
@@ -257,7 +258,7 @@ class Commande(Base):
     id_client:     Mapped[int]     = mapped_column(ForeignKey("clients.id_client"))
     montant_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
     statut:        Mapped[str]     = mapped_column(String(30), default="En attente")
-    mode_paiement: Mapped[str]     = mapped_column(String(30), default="Espèces")
+    mode_paiement: Mapped[str]     = mapped_column(String(40), default="Cash")
     id_vente:      Mapped[int | None] = mapped_column(ForeignKey("ventes.id_vente"))
 
     client: Mapped["Client"]              = relationship(back_populates="commandes")

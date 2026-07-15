@@ -61,6 +61,29 @@ DEVISE_DEFAULT = _get_param("DEVISE", "MRU")
 
 ROLES = ("ADMIN", "CAISSIER", "MAGASINIER")
 
+# Modes de paiement (Mauritanie)
+MODES_PAIEMENT = [
+    "Cash",
+    "Bankily",
+    "Masrvi",
+    "Sedad",
+    "Click",
+    "Bimbank Mobile",
+    "Amanty",
+]
+
+# Pour ventes / commandes : Crédit en plus (paiement différé)
+MODES_PAIEMENT_VENTE = MODES_PAIEMENT + ["Crédit"]
+
+
+def index_mode_paiement(valeur: str | None, options: list[str] | None = None) -> int:
+    """Index sûr pour st.selectbox (valeurs legacy incluses)."""
+    opts = options or MODES_PAIEMENT
+    if valeur and valeur in opts:
+        return opts.index(valeur)
+    return 0
+
+
 MENU_ACCESS = {
     "ADMIN": [
         "Dashboard", "Utilisateurs", "Clients", "Fournisseurs",

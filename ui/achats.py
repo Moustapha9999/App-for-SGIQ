@@ -6,14 +6,16 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from database.models import Achat, Fournisseur, LigneAchat, Produit
+from config import MODES_PAIEMENT, index_mode_paiement
 from services.logging_service import log_action
 from services.stock_service import mouvement_stock
 from utils.crud_ui import render_dataframe
+from utils.dialogs import request_dialog, run_confirm_dialog
+from utils.ui import page_header
 
 
 def page_achats(session, user):
-    st.title("🛒 Gestion des Achats")
-    st.markdown("---")
+    page_header("Gestion des Achats", "Bons d'achat, stock et annulations", "🛒")
 
     tab_nouveau, tab_hist, tab_modifier, tab_annuler = st.tabs(
         ["➕ Nouveau Bon d'Achat", "📜 Historique & Suivi", "✏️ Modifier", "❌ Annuler un Achat"]
@@ -47,7 +49,7 @@ def page_achats(session, user):
                 key="nouvel_achat_fourn",
             )
             mp = c_pay.selectbox(
-                "Mode de paiement", ["Espèces", "Virement", "Chèque"], key="nouvel_achat_mp"
+                "Mode de paiement", MODES_PAIEMENT, key="nouvel_achat_mp"
             )
             statut = c_stat.selectbox(
                 "Statut initial", ["Payé", "En attente"], key="nouvel_achat_statut"
@@ -203,10 +205,10 @@ def page_achats(session, user):
                 index=0 if a.statut == "Payé" else 1,
                 key="modifier_achat_statut",
             )
-            liste_mp = ["Espèces", "Virement", "Chèque"]
+            liste_mp = MODES_PAIEMENT
             mp = c_mod2.selectbox(
                 "Mode paiement", liste_mp,
-                index=liste_mp.index(a.mode_paiement) if a.mode_paiement in liste_mp else 0,
+                index=index_mode_paiement(a.mode_paiement, liste_mp),
                 key="modifier_achat_mp",
             )
 
@@ -235,25 +237,36 @@ def page_achats(session, user):
             aid = st.selectbox(
                 "Bon d'Achat à annuler", [a.id_achat for a in achats], key="annul_aid"
             )
-            confirmer = st.checkbox(
-                "Je confirme vouloir annuler cette opération.", key="annul_achat_confirm"
-            )
-            if st.button("❌ Confirmer l'annulation", type="primary", disabled=not confirmer):
-                a = session.get(Achat, aid)
-                for l in a.lignes:
-                    try:
-                        mouvement_stock(
-                            session, l.code_produit, "Sortie",
-                            l.quantite, f"Annul-Achat-{aid}", user.id_user,
-                        )
-                    except ValueError as e:
-                        st.error(f"Erreur Stock : {e}")
-                        session.rollback()
-                        return
-                a.annule = True
-                log_action(session, user.id_user, f"Annulation achat #{aid}")
-                session.commit()
-                st.toast(f"Achat #{aid} annulé.", icon="🗑️")
-                st.rerun()
+            if st.button("❌ Confirmer l'annulation", type="primary"):
+                request_dialog("_annul_achat", aid)
+
+            if "_annul_achat" in st.session_state:
+                pending_aid = st.session_state["_annul_achat"]
+
+                def _annuler():
+                    a = session.get(Achat, pending_aid)
+                    for l in a.lignes:
+                        try:
+                            mouvement_stock(
+                                session, l.code_produit, "Sortie",
+                                l.quantite, f"Annul-Achat-{pending_aid}", user.id_user,
+                            )
+                        except ValueError as e:
+                            st.error(f"Erreur Stock : {e}")
+                            session.rollback()
+                            return
+                    a.annule = True
+                    log_action(session, user.id_user, f"Annulation achat #{pending_aid}")
+                    session.commit()
+                    st.toast(f"Achat #{pending_aid} annulé.", icon="🗑️")
+
+                run_confirm_dialog(
+                    "_annul_achat",
+                    f"Annuler l'achat #{pending_aid} ?",
+                    "Les quantités seront retirées du stock automatiquement.",
+                    _annuler,
+                    confirm_label="Annuler l'achat",
+                    icon="❌",
+                )
         else:
             st.info("Aucun achat disponible pour annulation.")

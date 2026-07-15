@@ -7,12 +7,14 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
 
 from database.models import Client, Credit, PaiementCredit
+from config import MODES_PAIEMENT
 from services.logging_service import log_action
 from utils.crud_ui import render_dataframe
+from utils.ui import page_header
 
 
 def page_credits(session, user):
-    st.title("💳 Gestion des Crédits Clients")
+    page_header("Gestion des Crédits", "Débiteurs, encaissements et suivi", "💳")
 
     tab_debiteurs, tab_encaissements, tab_hist, tab_modifier = st.tabs([
         "👥 Clients Débiteurs",
@@ -81,6 +83,11 @@ def page_credits(session, user):
                     step=100.0,
                     key="encaiss_montant",
                 )
+                mode_enc = st.selectbox(
+                    "Mode de paiement",
+                    MODES_PAIEMENT,
+                    key="encaiss_mode",
+                )
                 st.caption(
                     f"Reste après versement : "
                     f"**{float(cr.montant_restant) - montant:,.0f} MRU**"
@@ -94,7 +101,9 @@ def page_credits(session, user):
 
             if btn:
                 m = Decimal(str(montant))
-                session.add(PaiementCredit(id_credit=cid, montant=m))
+                session.add(PaiementCredit(
+                    id_credit=cid, montant=m, mode_paiement=mode_enc,
+                ))
                 cr.montant_restant -= m
                 if cr.montant_restant <= 0:
                     cr.montant_restant = Decimal(0)
@@ -102,7 +111,7 @@ def page_credits(session, user):
                     if cr.vente:
                         cr.vente.statut = "Payée"
                     log_action(session, user.id_user,
-                               f"Crédit #{cid} soldé — {cr.client.nom_client}")
+                               f"Crédit #{cid} soldé via {mode_enc} — {cr.client.nom_client}")
                     session.commit()
                     st.toast(
                         f"✅ Crédit **#{cid}** soldé intégralement ! "
@@ -111,10 +120,10 @@ def page_credits(session, user):
                     )
                 else:
                     log_action(session, user.id_user,
-                               f"Paiement partiel crédit #{cid} : {float(m):,.0f} MRU")
+                               f"Paiement partiel crédit #{cid} via {mode_enc} : {float(m):,.0f} MRU")
                     session.commit()
                     st.toast(
-                        f"💰 Versement de **{float(m):,.0f} MRU** enregistré. "
+                        f"💰 Versement de **{float(m):,.0f} MRU** ({mode_enc}) enregistré. "
                         f"Reste : **{float(cr.montant_restant):,.0f} MRU**",
                         icon="💰",
                     )

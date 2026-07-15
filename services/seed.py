@@ -84,16 +84,16 @@ def seed_if_empty(session: Session):
     fournisseurs = [
         Fournisseur(raison_sociale="SOCOCIM Industries",
                     produit_principal="Ciment",
-                    telephone="33 839 00 00", mode_paiement="Virement", statut="Actif"),
+                    telephone="33 839 00 00", mode_paiement="Bankily", statut="Actif"),
         Fournisseur(raison_sociale="Ets. Diallo Matériaux",
                     produit_principal="Fer, Acier",
-                    telephone="77 456 78 90", mode_paiement="Chèque", statut="Actif"),
+                    telephone="77 456 78 90", mode_paiement="Masrvi", statut="Actif"),
         Fournisseur(raison_sociale="Peintex Dakar",
                     produit_principal="Peinture",
-                    telephone="78 123 00 11", mode_paiement="Espèces", statut="Actif"),
+                    telephone="78 123 00 11", mode_paiement="Cash", statut="Actif"),
         Fournisseur(raison_sociale="Électro Distribution SN",
                     produit_principal="Câbles, Disjoncteurs",
-                    telephone="76 999 88 77", mode_paiement="Virement", statut="Actif"),
+                    telephone="76 999 88 77", mode_paiement="Sedad", statut="Actif"),
     ]
     session.add_all(fournisseurs)
     session.flush()
@@ -128,7 +128,7 @@ def seed_if_empty(session: Session):
         date=datetime.now() - timedelta(days=3),
         id_fournisseur=fournisseurs[1].id_fournisseur,
         montant_total=Decimal("820000"),
-        mode_paiement="Chèque", statut="Payé",
+        mode_paiement="Cash", statut="Payé",
         id_user=users[0].id_user,
     )
     session.add(achat1)
@@ -148,7 +148,7 @@ def seed_if_empty(session: Session):
         id_client=clients[0].id_client,
         montant_ht=Decimal("185000"), remise=Decimal("0"),
         tva=Decimal("33300"), montant_total=Decimal("218300"),
-        mode_paiement="Virement", statut="Payée",
+        mode_paiement="Bankily", statut="Payée",
         id_user=users[1].id_user, numero_facture="FC-2025-0001",
     )
     session.add(vente1)

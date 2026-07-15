@@ -241,3 +241,24 @@
         padding: 0 12px !important;
     }
 }
+
+/* ── Dialogs / popups ── */
+div[data-testid="stDialog"] > div[role="dialog"] {
+  max-width: 420px !important;
+  padding: 1.25rem 1.35rem !important;
+}
+div[data-testid="stDialog"] [data-testid="stVerticalBlock"] {
+  gap: 0.65rem !important;
+}
+
+/* ── Page header polish ── */
+.main .block-container {
+  padding-top: 1.5rem !important;
+  padding-bottom: 2.5rem !important;
+}
+
+/* ── Select / date inputs soft radius ── */
+[data-baseweb="select"] > div,
+[data-baseweb="input"] {
+  border-radius: 8px !important;
+}

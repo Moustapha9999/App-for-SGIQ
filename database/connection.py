@@ -51,6 +51,31 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 def init_db():
     """Crée toutes les tables si elles n'existent pas encore."""
     Base.metadata.create_all(bind=engine)
+    _ensure_schema_patches()
+
+
+def _ensure_schema_patches():
+    """Ajoute les colonnes manquantes (ex. mode_paiement sur paiements_credit)."""
+    patches = [
+        ("paiements_credit", "mode_paiement", "VARCHAR(40) DEFAULT 'Cash'"),
+    ]
+    with engine.begin() as conn:
+        for table, column, coltype in patches:
+            try:
+                if _is_sqlite:
+                    rows = conn.execute(text(f"PRAGMA table_info({table})")).fetchall()
+                    existing = {r[1] for r in rows}
+                    if column not in existing:
+                        conn.execute(text(
+                            f"ALTER TABLE {table} ADD COLUMN {column} {coltype}"
+                        ))
+                else:
+                    conn.execute(text(
+                        f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {coltype}"
+                    ))
+            except Exception:
+                # Table absente ou droits insuffisants — ignore
+                pass
 
 
 # ── Session context manager ───────────────────────────────────────────────

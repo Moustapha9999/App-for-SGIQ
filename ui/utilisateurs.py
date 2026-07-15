@@ -7,6 +7,8 @@ from database.models import Utilisateur
 from services.auth import hash_password
 from services.logging_service import log_action
 from utils.crud_ui import render_dataframe
+from utils.dialogs import request_dialog, run_delete_dialog
+from utils.ui import page_header
 
 ROLE_BADGES = {
     "ADMIN":       "🔴 Admin",
@@ -16,7 +18,7 @@ ROLE_BADGES = {
 
 
 def page_utilisateurs(session, user):
-    st.title("👥 Gestion des Utilisateurs")
+    page_header("Gestion des Utilisateurs", "Comptes, rôles et accès à l'application", "👥")
 
     tab_liste, tab_ajouter, tab_modifier, tab_supprimer = st.tabs(
         ["📋 Liste", "➕ Ajouter", "✏️ Modifier", "🗑️ Supprimer"]
@@ -142,12 +144,18 @@ def page_utilisateurs(session, user):
                 f"⚠️ Vous allez supprimer **{u_obj.username}** "
                 f"({u_obj.nom} {u_obj.prenom}). Action irréversible."
             )
-            confirmer = st.checkbox("Je confirme la suppression", key="del_user_confirm")
             if st.button("🗑️ Supprimer définitivement", type="primary",
-                         disabled=not confirmer, key="del_user_btn"):
-                username_supp = u_obj.username
-                log_action(session, user.id_user, f"Suppression utilisateur {username_supp}")
-                session.delete(u_obj)
-                session.commit()
-                st.toast(f"🗑️ Utilisateur **{username_supp}** supprimé.", icon="🗑️")
-                st.rerun()
+                         key="del_user_btn"):
+                request_dialog("_del_user", uid)
+
+            if "_del_user" in st.session_state:
+                pending = session.get(Utilisateur, st.session_state["_del_user"])
+                if pending:
+                    def _delete():
+                        username_supp = pending.username
+                        log_action(session, user.id_user, f"Suppression utilisateur {username_supp}")
+                        session.delete(pending)
+                        session.commit()
+                        st.toast(f"🗑️ Utilisateur **{username_supp}** supprimé.", icon="🗑️")
+
+                    run_delete_dialog("_del_user", pending.username, _delete)

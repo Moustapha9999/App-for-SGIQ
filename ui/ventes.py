@@ -25,6 +25,9 @@ from services.pdf_invoice import generate_invoice_pdf
 from services.stock_service import mouvement_stock
 
 from utils.crud_ui import render_dataframe
+from utils.dialogs import request_dialog, run_delete_dialog
+from config import MODES_PAIEMENT_VENTE
+from utils.ui import page_header
 
 
 
@@ -32,7 +35,7 @@ from utils.crud_ui import render_dataframe
 
 def page_ventes(session, user):
 
-    st.header("💰 Gestion des Ventes")
+    page_header("Gestion des Ventes", "Caisse, factures et historique", "💰")
 
     tab_nouvelle, tab_hist, tab_factures, tab_modifier, tab_supprimer = st.tabs(
 
@@ -56,7 +59,7 @@ def page_ventes(session, user):
 
             cid = st.selectbox("Client", [None] + [c.id_client for c in clients], format_func=lambda i: "Comptant" if i is None else next(c.nom_client for c in clients if c.id_client == i))
 
-            mp = st.selectbox("Mode paiement", ["Espèces", "Crédit", "Virement"])
+            mp = st.selectbox("Mode paiement", MODES_PAIEMENT_VENTE)
 
             remise_globale = st.number_input("Remise globale", min_value=0.0, step=0.01, value=0.0)
 
@@ -357,24 +360,21 @@ def page_ventes(session, user):
             vid = st.selectbox("Vente à supprimer", [v.id_vente for v in ventes])
 
             if st.button("Supprimer la vente", type="primary"):
+                request_dialog("_del_vente", vid)
 
-                v = session.get(Vente, vid)
+            if "_del_vente" in st.session_state:
+                pending_vid = st.session_state["_del_vente"]
 
-                for l in v.lignes:
+                def _delete():
+                    v = session.get(Vente, pending_vid)
+                    for l in v.lignes:
+                        mouvement_stock(session, l.code_produit, "Entrée", l.quantite, f"Suppr-Vente-{pending_vid}", user.id_user)
+                    if v.credit:
+                        session.delete(v.credit)
+                    log_action(session, user.id_user, f"Suppression vente #{pending_vid}")
+                    session.delete(v)
+                    session.commit()
+                    st.toast(f"Vente #{pending_vid} supprimée.", icon="🗑️")
 
-                    mouvement_stock(session, l.code_produit, "Entrée", l.quantite, f"Suppr-Vente-{vid}", user.id_user)
-
-                if v.credit:
-
-                    session.delete(v.credit)
-
-                log_action(session, user.id_user, f"Suppression vente #{vid}")
-
-                session.delete(v)
-
-                session.commit()
-
-                st.success("Vente supprimée.")
-
-                st.rerun() 
+                run_delete_dialog("_del_vente", f"vente #{pending_vid}", _delete) 
 
